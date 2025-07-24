@@ -3,7 +3,7 @@ package core
 import (
 	"fmt"
 
-	"github.com/llm-inferno/optimizer/pkg/config"
+	"github.com/llm-inferno/optimizer-light/pkg/config"
 )
 
 // A service class

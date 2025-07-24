@@ -6,11 +6,11 @@ import (
 	"math/rand/v2"
 	"os"
 
-	"github.com/llm-inferno/optimizer/pkg/config"
-	"github.com/llm-inferno/optimizer/pkg/core"
-	"github.com/llm-inferno/optimizer/pkg/manager"
-	"github.com/llm-inferno/optimizer/pkg/solver"
-	"github.com/llm-inferno/optimizer/pkg/utils"
+	"github.com/llm-inferno/optimizer-light/pkg/config"
+	"github.com/llm-inferno/optimizer-light/pkg/core"
+	"github.com/llm-inferno/optimizer-light/pkg/manager"
+	"github.com/llm-inferno/optimizer-light/pkg/solver"
+	"github.com/llm-inferno/optimizer-light/pkg/utils"
 )
 
 func main() {

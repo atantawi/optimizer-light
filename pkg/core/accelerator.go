@@ -3,7 +3,7 @@ package core
 import (
 	"fmt"
 
-	"github.com/llm-inferno/optimizer/pkg/config"
+	"github.com/llm-inferno/optimizer-light/pkg/config"
 )
 
 // An accelerator used in an inference server

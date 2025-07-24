@@ -1,10 +1,9 @@
-module github.com/llm-inferno/optimizer
+module github.com/llm-inferno/optimizer-light
 
 go 1.23.0
 
 require (
 	github.com/gin-gonic/gin v1.10.0
-	github.com/llm-inferno/lpsolve v0.1.0
 	github.com/llm-inferno/queue-analysis v0.1.0
 )
 
@@ -13,7 +12,6 @@ require (
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/draffensperger/golp v0.0.0-20241201023928-94a60bf898d2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.0.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

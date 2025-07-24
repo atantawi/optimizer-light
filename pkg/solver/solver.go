@@ -7,8 +7,8 @@ import (
 	"math"
 	"slices"
 
-	"github.com/llm-inferno/optimizer/pkg/config"
-	"github.com/llm-inferno/optimizer/pkg/core"
+	"github.com/llm-inferno/optimizer-light/pkg/config"
+	"github.com/llm-inferno/optimizer-light/pkg/core"
 )
 
 // Solver of allocation assignment problem
@@ -57,11 +57,7 @@ func (s *Solver) Solve() error {
 	}
 
 	// find solution
-	if s.optimizerSpec.MILPSolver {
-		if err := s.SolveMILP(); err != nil {
-			return err
-		}
-	} else if s.optimizerSpec.Unlimited {
+	if s.optimizerSpec.Unlimited {
 		s.SolveUnlimited()
 	} else {
 		s.SolveLimited()
@@ -211,11 +207,6 @@ func (s *Solver) SolveLimited() {
 			entries = slices.Insert(entries, i, top)
 		}
 	}
-}
-
-func (s *Solver) SolveMILP() error {
-	mip := NewMILPSolver(s.optimizerSpec)
-	return mip.Solve()
 }
 
 func (s *Solver) AllocationDiff() map[string]*core.AllocationDiff {

@@ -11,8 +11,6 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/draffensperger/golp v0.0.0-20241201023928-94a60bf898d2 h1:y10u52tZ6hYiCjExVmaE8fnkhxrCpiTZvNZc7ZIfQgo=
-github.com/draffensperger/golp v0.0.0-20241201023928-94a60bf898d2/go.mod h1:/TbDI9zua4CTUs81AOyDxnKAuvXX/SmOjonijHadP+k=
 github.com/gabriel-vasile/mimetype v1.4.8 h1:FfZ3gj38NjllZIeJAmMhr+qKL8Wu+nOoI3GqacKw1NM=
 github.com/gabriel-vasile/mimetype v1.4.8/go.mod h1:ByKUIKGjh1ODkGM1asKUbQZOLGrPjydw3hYPU2YU9t8=
 github.com/gin-contrib/sse v1.0.0 h1:y3bT1mUWUxDpW4JLQg/HnTqV4rozuW4tC9eFKTxYI9E=
@@ -47,8 +45,6 @@ github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=
 github.com/leodido/go-urn v1.4.0/go.mod h1:bvxc+MVxLKB4z00jd1z+Dvzr47oO32F/QSNjSBOlFxI=
-github.com/llm-inferno/lpsolve v0.1.0 h1:V7FyFOxCEZyYoP2ppapqw0frzQS1ZbXF7YSSaVL4CNk=
-github.com/llm-inferno/lpsolve v0.1.0/go.mod h1:FzxR0cEKOAYgb2gO55vEv8SyCnDkAqGm+xZNQl2gb5E=
 github.com/llm-inferno/queue-analysis v0.1.0 h1:1GfOZ82MVYTHVqf3szru87JWP6g6q22eaZ5lRok0JJU=
 github.com/llm-inferno/queue-analysis v0.1.0/go.mod h1:v/9Ae2WaDwn86zJDMCQxBADtT4nxmkyuwOzmkSypzfg=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
