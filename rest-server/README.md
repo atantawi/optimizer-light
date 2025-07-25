@@ -201,9 +201,7 @@ The following data is needed by the Optimizer (Declarations described [types](..
     {
         "optimizer": {
             "unlimited": true,
-            "heterogeneous": false,
-            "milpSolver" : false,
-            "useCplex" : false
+            "heterogeneous": false
         }
     }
     ```
@@ -212,8 +210,6 @@ The following data is needed by the Optimizer (Declarations described [types](..
 
     - `unlimited`: The available number of accelerator types is unlimited (used in capacity planning mode), as opposed to being limited to the specified number (used in cluster mode).
     - `heterogeneous`: Whether servers accomodate heterogeneous accelerators for their replicas, e.g. five replicas of a server, two of which run on A100 and the other three run on G2.
-    - `milpSolver`: Option to use an MILP (mixed Integer Linear Programming) problem solver, or rely on a (default) greedy algorithm. Currently, the provided solvers are: lpSolve and CPLEX.
-    - `useCplex`: If using an MILP solver, use CPLEX.
 
 The output of the Optimizer is an Allocation Solution, in addition to updating the desired allocation of all servers.
 
