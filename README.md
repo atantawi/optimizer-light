@@ -2,25 +2,14 @@
 
 The inference system optimizer assigns GPU types to inference model servers and decides on the number of replicas for each model for a given request traffic load and classes of service, as well as the batch size. ([slides](docs/slides/inferno-dynamic.pdf))
 
+The light optimizer provided in this repository uses a simple greedy algorithm , as opposed to using a solver as in [optimizer](https://github.com/llm-inferno/optimizer).
 ## Building
 
 ```bash
-docker build -t  inferno . --load
+docker build -t  inferno-light . --load
 ```
 
-## Prerequisites
-
-- lp_solve Mixed Integer Linear Programming (MILP) solver
-
-  [Installation instructions and code](https://github.com/llm-inferno/lpsolve)
-  
-- IBM CPLEX (optional)
-
-  Information and instructions [IBM CPLEX as a solver](https://github.com/llm-inferno/lpsolve/tree/main/cplex)
-
 ## Running
-
-First, install [prerequisites](#prerequisites) if running locally (not using an image).
 
 ### I. Optimizer only
 
