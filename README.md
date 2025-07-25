@@ -2,11 +2,12 @@
 
 The inference system optimizer assigns GPU types to inference model servers and decides on the number of replicas for each model for a given request traffic load and classes of service, as well as the batch size. ([slides](docs/slides/inferno-dynamic.pdf))
 
-The light optimizer provided in this repository uses a simple greedy algorithm , as opposed to using a solver as in [optimizer](https://github.com/llm-inferno/optimizer).
+The light optimizer provided in this repository uses a simple greedy algorithm, as opposed to using a solver as in [optimizer](https://github.com/llm-inferno/optimizer).
+
 ## Building
 
 ```bash
-docker build -t  inferno-light . --load
+docker build -t  inferno-optimizer-light . --load
 ```
 
 ## Running
@@ -16,6 +17,15 @@ docker build -t  inferno-light . --load
 There are two ways to run the optimizer.
 
 1. **Direct function calls**: An example is provided in [main.go](demos/main/main.go).
+
+    First, populate sample data.
+
+    ```bash
+    git submodule init
+    git submodule update
+    ```
+
+    Then, run the demo.
 
     ```bash
     cd demos/main
