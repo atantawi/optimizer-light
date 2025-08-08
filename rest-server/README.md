@@ -203,7 +203,7 @@ The following data is needed by the Optimizer (Declarations described [types](..
     {
         "optimizer": {
             "unlimited": true,
-            "heterogeneous": false
+            "saturationPolicy" : "None"
         }
     }
     ```
@@ -211,7 +211,12 @@ The following data is needed by the Optimizer (Declarations described [types](..
     The flags are as follows.
 
     - `unlimited`: The available number of accelerator types is unlimited (used in capacity planning mode), as opposed to being limited to the specified number (used in cluster mode).
-    - `heterogeneous`: Whether servers accomodate heterogeneous accelerators for their replicas, e.g. five replicas of a server, two of which run on A100 and the other three run on G2.
+    - `saturationPolicy`: Set an allocation policy under saturated condition.
+
+      - ***None***: no additional allocation beyond satisfying SLOs
+      - ***PriorityExhaustive***: allocating exhaustively to servers in priority ordering
+      - ***PriorityRoundRobin***: allocating in round-robin fashion within priority groups
+      - ***RoundRobin***: allocating in round-robin fashion across all servers
 
 The output of the Optimizer is an Allocation Solution, in addition to updating the desired allocation of all servers.
 
