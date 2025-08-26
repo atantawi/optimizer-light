@@ -216,7 +216,8 @@ The following data is needed by the Optimizer (Declarations described [types](..
     ```json
     {
         "optimizer": {
-            "unlimited": true,
+            "unlimited": false,
+            "delayedBestEffort": false,
             "saturationPolicy" : "None"
         }
     }
@@ -225,6 +226,7 @@ The following data is needed by the Optimizer (Declarations described [types](..
     The flags are as follows.
 
     - `unlimited`: The available number of accelerator types is unlimited (used in capacity planning mode), as opposed to being limited to the specified number (used in cluster mode).
+    - `delayedBestEffort`: Delay best effort allocation after attempting allocation to all priority groups.
     - `saturationPolicy`: Set an allocation policy under saturated condition.
 
       - ***None***: no additional allocation beyond satisfying SLOs

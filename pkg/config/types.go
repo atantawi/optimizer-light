@@ -123,8 +123,9 @@ type OptimizerData struct {
 
 // Specifications for optimizer data
 type OptimizerSpec struct {
-	Unlimited        bool   `json:"unlimited"`        // unlimited number of accelerator types (for capacity planning and/or cloud)
-	SaturationPolicy string `json:"saturationPolicy"` // allocation policy under saturated condition
+	Unlimited         bool   `json:"unlimited"`         // unlimited number of accelerator types (for capacity planning and/or cloud)
+	DelayedBestEffort bool   `json:"delayedBestEffort"` // delay best effort allocation after attempting allocation to all priority groups
+	SaturationPolicy  string `json:"saturationPolicy"`  // allocation policy under saturated condition
 }
 
 type AllocationSolution struct {
