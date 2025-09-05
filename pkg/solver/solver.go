@@ -78,7 +78,6 @@ func (s *Solver) SolveUnlimited() {
 	}
 }
 
-
 func (s *Solver) AllocationDiff() map[string]*core.AllocationDiff {
 	return s.diffAllocation
 }
