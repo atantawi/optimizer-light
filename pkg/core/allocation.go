@@ -16,11 +16,11 @@ type Allocation struct {
 	batchSize   int     // max batch size
 	cost        float32 // cost of this allocation
 	value       float32 // value of this allocation
-	servTime    float32 // expected average token service time
-	waitTime    float32 // expected average request queueing time
+	itl         float32 // expected average token decode time (msec)
+	ttft        float32 // expected average request queueing and prefill times (msec)
 	rho         float32 // average concurrently running requests / max batch size
 
-	maxArrvRatePerReplica float32 // maximum arrival rate per replica
+	maxArrvRatePerReplica float32 // maximum arrival rate per replica (req/msec)
 }
 
 // Create an allocation of an accelerator to a server; nil if not feasible
@@ -47,7 +47,8 @@ func CreateAllocation(serverName string, gName string) *Allocation {
 	if server = GetServer(serverName); server == nil {
 		return nil
 	}
-	if load = server.Load(); load == nil || load.ArrivalRate < 0 || load.AvgLength < 0 {
+	if load = server.Load(); load == nil || load.ArrivalRate < 0 ||
+		load.AvgInTokens < 0 || load.AvgOutTokens < 0 {
 		return nil
 	}
 
@@ -69,12 +70,12 @@ func CreateAllocation(serverName string, gName string) *Allocation {
 	}
 
 	// handle zero traffic case
-	if load.ArrivalRate == 0 || load.AvgLength == 0 {
+	if load.ArrivalRate == 0 || load.AvgOutTokens == 0 {
 		return zeroLoadAllocation(server, model, acc, perf)
 	}
 
 	// calculate max batch size (N) based on average request length (K)
-	K := load.AvgLength
+	K := load.AvgOutTokens
 
 	// use maxBatchSize from configured value or scaled performance data
 	var N int
@@ -86,25 +87,23 @@ func CreateAllocation(serverName string, gName string) *Allocation {
 	maxQueue := N * config.MaxQueueToBatchRatio
 
 	// create queue analyzer
-	// TODO: add data for gamma and delta prefill parameters
 	qConfig := &analyzer.Configuration{
 		MaxBatchSize: N,
 		MaxQueueSize: maxQueue,
 		ServiceParms: &analyzer.ServiceParms{
 			Prefill: &analyzer.PrefillParms{
-				Gamma: perf.Alpha,
-				Delta: perf.Beta,
+				Gamma: perf.PrefillParms.Gamma,
+				Delta: perf.PrefillParms.Delta,
 			},
 			Decode: &analyzer.DecodeParms{
-				Alpha: perf.Alpha,
-				Beta:  perf.Beta,
+				Alpha: perf.DecodeParms.Alpha,
+				Beta:  perf.DecodeParms.Beta,
 			},
 		},
 	}
 
-	// TODO: add input tokens for prefill
 	requestData := &analyzer.RequestSize{
-		AvgInputTokens:  1,
+		AvgInputTokens:  load.AvgInTokens,
 		AvgOutputTokens: K,
 	}
 
@@ -114,9 +113,11 @@ func CreateAllocation(serverName string, gName string) *Allocation {
 		return nil
 	}
 
-	waitTimeLimit := target.TTW / config.SLOMargin // distribution of waiting time assumed exponential
+	// TODO: do we need this?
+	// waitTimeLimit := target.TTFT / config.SLOMargin // distribution of waiting time assumed exponential
+
 	targetPerf := &analyzer.TargetPerf{
-		TargetTTFT: waitTimeLimit,
+		TargetTTFT: target.TTFT,
 		TargetITL:  target.ITL,
 		TargetTPS:  target.TPS,
 	}
@@ -151,112 +152,14 @@ func CreateAllocation(serverName string, gName string) *Allocation {
 		return nil
 	}
 	rho := metrics.Rho
-	servTime := metrics.AvgTokenTime
-	wait := metrics.AvgWaitTime
-	// fmt.Printf("numReplicas=%d; batchSize=%d; rate=%v, tokenTime=%v; wait=%v; \n", numReplicas, N, rate, servTime, wait)
+	itl := metrics.AvgTokenTime
+	ttft := metrics.AvgWaitTime + metrics.AvgPrefillTime
+	// fmt.Printf("numReplicas=%d; batchSize=%d; rate=%v, itl=%v; ttft=%v; \n", numReplicas, N, rate, itl, ttft)
 
 	alloc := &Allocation{accelerator: gName, numReplicas: numReplicas, batchSize: N,
-		cost: cost, servTime: servTime, waitTime: wait, rho: rho, maxArrvRatePerReplica: rateStar / 1000}
+		cost: cost, itl: itl, ttft: ttft, rho: rho, maxArrvRatePerReplica: rateStar / 1000}
 	alloc.SetValue(alloc.cost)
 	return alloc
-}
-
-// Change number of replicas in allocation and re-evaluate performance, assuming total load on a server
-func (a *Allocation) AdjustNumReplicas(numReplicas int, server *Server, model *Model) error {
-	if a.numReplicas < 1 || a.batchSize < 1 {
-		return fmt.Errorf("invalid current numReplicas (%d) or batchSize (%d)", a.numReplicas, a.batchSize)
-	}
-
-	// get load statistics
-	load := server.Load()
-	if load == nil {
-		return fmt.Errorf("missing server load spec for server %s", server.name)
-	}
-	K := load.AvgLength
-	totalRate := load.ArrivalRate / 60
-
-	// check if throughtput constrained
-	var target *Target
-	if svClass := GetServiceClass(server.ServiceClassName()); svClass != nil {
-		if target = svClass.ModelTarget(model.name); target != nil {
-			if target.TPS > 0 && K > 0 {
-				totalRate = target.TPS / float32(K)
-			}
-		}
-	}
-
-	// get performance parameters
-	perf := model.PerfData(a.accelerator)
-	if perf == nil {
-		return fmt.Errorf("missing performance data for model %s on accelerator %s", model.Name(), a.accelerator)
-	}
-
-	// calculate queue statistics
-	N := a.batchSize
-	maxQueue := N * config.MaxQueueToBatchRatio
-
-	// create queue analyzer
-	// TODO: add data for gamma and delta prefill parameters
-	qConfig := &analyzer.Configuration{
-		MaxBatchSize: N,
-		MaxQueueSize: maxQueue,
-		ServiceParms: &analyzer.ServiceParms{
-			Prefill: &analyzer.PrefillParms{
-				Gamma: perf.Alpha,
-				Delta: perf.Beta,
-			},
-			Decode: &analyzer.DecodeParms{
-				Alpha: perf.Alpha,
-				Beta:  perf.Beta,
-			},
-		},
-	}
-
-	// TODO: add input tokens for prefill
-	requestData := &analyzer.RequestSize{
-		AvgInputTokens:  1,
-		AvgOutputTokens: K,
-	}
-
-	queueAnalyzer, err := analyzer.NewQueueAnalyzer(qConfig, requestData)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	// analyze queue under load
-	rate := totalRate / float32(numReplicas)
-	var metrics *analyzer.AnalysisMetrics
-	if metrics, err = queueAnalyzer.Analyze(rate); err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	// set allocation fields
-	a.rho = metrics.Rho
-	a.servTime = metrics.AvgTokenTime
-	a.waitTime = metrics.AvgWaitTime
-
-	// adjust cost and value
-	factor := float32(numReplicas) / float32(a.numReplicas)
-	a.cost *= factor
-	a.value *= factor
-
-	waitTimeLimit := target.TTW / config.SLOMargin // distribution of waiting time assumed exponential
-	targetPerf := &analyzer.TargetPerf{
-		TargetTTFT: waitTimeLimit,
-		TargetITL:  target.ITL,
-		TargetTPS:  target.TPS,
-	}
-
-	// determine max rates to satisfy targets
-	if _, metrics, _, err = queueAnalyzer.Size(targetPerf); err != nil {
-		// fmt.Println(err)
-		return nil
-	}
-	a.maxArrvRatePerReplica = metrics.Throughput / 1000
-	a.numReplicas = numReplicas
-	return nil
 }
 
 func (a *Allocation) Scale(serverName string) (alloc *Allocation, inc int) {
@@ -352,22 +255,34 @@ func (a *Allocation) Saturated(totalRate float32) bool {
 	return totalRate > float32(a.numReplicas)*a.MaxRPM()
 }
 
-// Allocation in case of zeroload
+// Allocation in case of zero load
 func zeroLoadAllocation(server *Server, model *Model, acc *Accelerator, perf *config.ModelAcceleratorPerfData) *Allocation {
+
+	numReplicas := server.minNumReplicas
+	gName := acc.Name()
+	if numReplicas == 0 {
+		alloc := &Allocation{accelerator: "", numReplicas: 0, batchSize: 0,
+			cost: 0, itl: 0, ttft: 0, rho: 0, maxArrvRatePerReplica: 0}
+		alloc.SetValue(0)
+		return alloc
+	}
+
 	maxBatchSize := perf.MaxBatchSize
 	if server.maxBatchSize > 0 {
 		maxBatchSize = server.maxBatchSize
 	}
-	numReplicas := server.minNumReplicas
-	gName := acc.Name()
 	totalNumInstances := model.NumInstances(gName) * numReplicas
 	cost := acc.Cost() * float32(totalNumInstances)
-	servTime := perf.Alpha + perf.Beta
-	minServTime := perf.Alpha + perf.Beta*float32(maxBatchSize)
-	maxArrvRatePerReplica := float32(maxBatchSize) / minServTime
+
+	//TODO: maxArrvRatePerReplica seems to be meaningless
+	decodeTime := perf.DecodeParms.Alpha + perf.DecodeParms.Beta
+	maxDecodeTime := perf.DecodeParms.Alpha + perf.DecodeParms.Beta*float32(maxBatchSize)
+	prefillTime := perf.PrefillParms.Gamma + perf.PrefillParms.Delta
+	maxServTime := prefillTime + maxDecodeTime
+	maxArrvRatePerReplica := float32(maxBatchSize) / maxServTime
 
 	alloc := &Allocation{accelerator: gName, numReplicas: numReplicas, batchSize: maxBatchSize,
-		cost: cost, servTime: servTime, waitTime: 0, rho: 0, maxArrvRatePerReplica: maxArrvRatePerReplica}
+		cost: cost, itl: decodeTime, ttft: prefillTime, rho: 0, maxArrvRatePerReplica: maxArrvRatePerReplica}
 	alloc.SetValue(alloc.cost)
 	return alloc
 }
@@ -391,8 +306,8 @@ func (a *Allocation) Clone() *Allocation {
 		batchSize:   a.batchSize,
 		cost:        a.cost,
 		value:       a.value,
-		servTime:    a.servTime,
-		waitTime:    a.waitTime,
+		itl:         a.itl,
+		ttft:        a.ttft,
 		rho:         a.rho,
 
 		maxArrvRatePerReplica: a.maxArrvRatePerReplica,
@@ -405,8 +320,8 @@ func (a *Allocation) AllocationData() *config.AllocationData {
 		NumReplicas: a.numReplicas,
 		MaxBatch:    a.batchSize,
 		Cost:        a.cost,
-		ITLAverage:  a.servTime,
-		WaitAverage: a.waitTime,
+		ITLAverage:  a.itl,
+		TTFTAverage: a.ttft,
 	}
 }
 
@@ -416,14 +331,14 @@ func AllocationFromData(data *config.AllocationData) *Allocation {
 		numReplicas: data.NumReplicas,
 		batchSize:   data.MaxBatch,
 		cost:        data.Cost,
-		servTime:    data.ITLAverage,
-		waitTime:    data.WaitAverage,
+		itl:         data.ITLAverage,
+		ttft:        data.TTFTAverage,
 	}
 }
 
 func (a *Allocation) String() string {
-	return fmt.Sprintf("{acc=%s; num=%d; maxBatch=%d; cost=%v, val=%v, servTime=%v, waitTime=%v, rho=%v, maxRPM=%v}",
-		a.accelerator, a.numReplicas, a.batchSize, a.cost, a.value, a.servTime, a.waitTime, a.rho, a.MaxRPM())
+	return fmt.Sprintf("{acc=%s; numRep=%d; maxBatch=%d; cost=%v, val=%v, itl=%v, ttft=%v, rho=%v, maxRPM=%v}",
+		a.accelerator, a.numReplicas, a.batchSize, a.cost, a.value, a.itl, a.ttft, a.rho, a.MaxRPM())
 }
 
 // Orchestration difference between two allocations
